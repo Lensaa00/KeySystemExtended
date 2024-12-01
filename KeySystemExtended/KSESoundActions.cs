@@ -6,45 +6,64 @@ namespace KeySystemExtended
 {
     public class KSESoundActions : MonoBehaviour
     {
-        private AudioSource audioSource;
-        private ModAudio modAudio = new ModAudio();
+        public AudioSource carAudioSource;
+        public AudioSource playerAudioSource;
+        private ModAudio carModAudio = new ModAudio();
+        private ModAudio playerModAudio = new ModAudio();
 
-        private Dictionary<string, string> soundPaths = new Dictionary<string, string>();
+        private Dictionary<string, string> soundPaths;
+
+        // Перечисление категорий для предотвращения ошибок
+        public enum SoundCategory
+        {
+            Player,
+            Car
+        }
 
         void Start()
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.volume = 0.25f;
-            audioSource.loop = false;
-            audioSource.clip = null;
+            ConfigureAudioSource(carAudioSource);
+            ConfigureAudioSource(playerAudioSource);
 
-            audioSource.spatialBlend = 1f; // Полностью 3D-звук
-            audioSource.minDistance = 1f; // Минимальная дистанция, на которой звук воспроизводится на полной громкости
-            audioSource.maxDistance = 10f; // Максимальная дистанция, на которой звук затихает
-            audioSource.rolloffMode = AudioRolloffMode.Linear; // Линейное затухание громкости
+            carModAudio.audioSource = carAudioSource;
+            playerModAudio.audioSource = playerAudioSource;
 
-            modAudio.audioSource = audioSource;
+            InitializeSoundPaths();
+        }
 
-            // Инициализация путей к звукам
+        private void ConfigureAudioSource(AudioSource source)
+        {
+            source.volume = 0.25f;
+            source.loop = false;
+            source.clip = null;
+
+            source.spatialBlend = 1f;
+            source.minDistance = 1f;
+            source.maxDistance = 10f;
+            source.rolloffMode = AudioRolloffMode.Linear;
+        }
+
+        private void InitializeSoundPaths()
+        {
             soundPaths = new Dictionary<string, string>
             {
-                { "player_EngineStarting", "Mods/Assets/KeySystemExtended/Sound/Player/EngineStarting.wav" },
-                { "player_EngineStarted",  "Mods/Assets/KeySystemExtended/Sound/Player/EngineStarted.wav" },
-                { "player_Ping",  "Mods/Assets/KeySystemExtended/Sound/Player/Ping.wav" },
-                { "player_Ping2",  "Mods/Assets/KeySystemExtended/Sound/Player/Ping2.wav" },
-                { "player_Ping3",  "Mods/Assets/KeySystemExtended/Sound/Player/Ping3.wav" },
-                { "car_LockUnlock",        "Mods/Assets/KeySystemExtended/Sound/Car/LockUnlock.wav" }
+                { "Player_EngineStarting", "Mods/Assets/KeySystemExtended/Sound/Player/EngineStarting.wav" },
+                { "Player_EngineStarted",  "Mods/Assets/KeySystemExtended/Sound/Player/EngineStarted.wav" },
+                { "Player_Ping",  "Mods/Assets/KeySystemExtended/Sound/Player/Ping.wav" },
+                { "Player_Ping2",  "Mods/Assets/KeySystemExtended/Sound/Player/Ping2.wav" },
+                { "Player_Ping3",  "Mods/Assets/KeySystemExtended/Sound/Player/Ping3.wav" },
+                { "Car_LockUnlock",        "Mods/Assets/KeySystemExtended/Sound/Car/LockUnlock.wav" }
             };
         }
 
-        public void Play(string category, string soundName)
+        public void Play(SoundCategory category, string soundName)
         {
             string key = $"{category}_{soundName}";
             if (soundPaths.TryGetValue(key, out string path))
             {
+                ModAudio modAudio = category == SoundCategory.Player ? playerModAudio : carModAudio;
                 modAudio.LoadAudioFromFile(path, true, true);
                 modAudio.Play();
-                ModConsole.Print($"[KSE] Played sound on {gameObject.name}: {path}");
             }
             else
             {
